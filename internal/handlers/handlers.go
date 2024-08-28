@@ -15,11 +15,6 @@ func (s *Server) GetOwnersSummary(w http.ResponseWriter, r *http.Request) {
 	// Implementation here
 }
 
-// Generate a new QR code
-func (s *Server) PostOwnersQrcode(w http.ResponseWriter, r *http.Request) {
-	// Implementation here
-}
-
 // Get system statistics for admin
 func (s *Server) GetAdminStats(w http.ResponseWriter, r *http.Request) {
 	// Implementation here
