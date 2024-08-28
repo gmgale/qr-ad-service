@@ -15,11 +15,12 @@ func (s *Server) GetOwnersSummary(w http.ResponseWriter, r *http.Request) {
 	// Implementation here
 }
 
-// Wire up the server with the routes
+// SetupRouter initializes the router and returns it
 func SetupRouter() chi.Router {
 	r := chi.NewRouter()
 	s := &Server{}
 
+	// Register the API routes with the server instance
 	api.HandlerFromMux(s, r)
 
 	return r
