@@ -19,22 +19,36 @@ func (s *Server) PostAuthRegister(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Check if the email already exists
+	var existingUser models.User
+	if err := db.DB.Where("email = ?", req.Email).First(&existingUser).Error; err == nil {
+		http.Error(w, "Email already in use", http.StatusConflict)
+		return
+	}
+
+	// Hash the password before saving it to the database
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.PasswordHash), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
 		return
 	}
 
-	req.PasswordHash = string(hashedPassword)
-	req.CreatedAt = time.Now()
-	req.UpdatedAt = time.Now()
+	// Create the new user record
+	newUser := models.User{
+		Email:        req.Email,
+		PasswordHash: string(hashedPassword),
+		BusinessName: req.BusinessName,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
+	}
 
-	if err := db.DB.Create(&req).Error; err != nil {
+	if err := db.DB.Create(&newUser).Error; err != nil {
 		http.Error(w, "Failed to create user", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"message": "User registered successfully"})
 }
 
 // Login an owner

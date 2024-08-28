@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/gmgale/qr-ad-service/internal/auth"
 	"net/http"
 	"time"
 
@@ -19,21 +20,29 @@ func (s *Server) PostOwnersQrcode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Generate the QR code
-	png, err := qrcode.Encode(req.OriginalURL, qrcode.Medium, 256)
+	qrCodePNG, err := qrcode.Encode(req.OriginalURL, qrcode.Medium, 256)
 	if err != nil {
 		http.Error(w, "Failed to generate QR code", http.StatusInternalServerError)
 		return
 	}
 
-	req.GeneratedCode = string(png)
-	req.CreatedAt = time.Now()
-	req.UpdatedAt = time.Now()
+	// Extract the user ID from the JWT context
+	userID := r.Context().Value(auth.UserIDContextKey).(int64)
 
-	if err := db.DB.Create(&req).Error; err != nil {
+	// Save the QR code data to the database
+	newQRCode := models.QRCode{
+		OriginalURL:   req.OriginalURL,
+		GeneratedCode: string(qrCodePNG),
+		UserID:        userID,
+		CreatedAt:     time.Now(),
+		UpdatedAt:     time.Now(),
+	}
+
+	if err := db.DB.Create(&newQRCode).Error; err != nil {
 		http.Error(w, "Failed to save QR code", http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusCreated)
-	w.Write(png) // Optionally return the PNG data directly
+	w.Write(qrCodePNG) // Optionally return the PNG data directly
 }
