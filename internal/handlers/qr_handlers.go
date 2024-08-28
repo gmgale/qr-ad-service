@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"github.com/gmgale/qr-ad-service/internal"
 	"github.com/gmgale/qr-ad-service/internal/auth"
+	"github.com/gmgale/qr-ad-service/internal/services"
 	"net/http"
 	"time"
 
@@ -46,4 +47,33 @@ func (s *Server) PostOwnersQrcode(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	w.Write(qrCodePNG) // Optionally return the PNG data directly
+}
+
+// Serve an ad and then redirect to the original URL
+func (s *Server) ServeAdAndRedirect(w http.ResponseWriter, r *http.Request) {
+	// Extract the user ID from the JWT context
+	userID := r.Context().Value(auth.UserIDContextKey).(int64)
+
+	// Retrieve the QR code based on the provided ID
+	qrCodeID := r.URL.Query().Get("qrCodeID")
+	var qrCode models.QRCode
+	if err := db.DB.Where("id = ? AND user_id = ?", qrCodeID, userID).First(&qrCode).Error; err != nil {
+		internal.WriteAPIError(w, internal.NewAPIError(http.StatusNotFound, "QR code not found"))
+		return
+	}
+
+	// Serve the ad using Google Ads
+	googleAdsService, err := services.NewGoogleAdsService("config/google-ads.json")
+	if err != nil {
+		internal.WriteAPIError(w, internal.NewAPIError(http.StatusInternalServerError, "Failed to initialize Google Ads service"))
+		return
+	}
+
+	if err := googleAdsService.ServeAd(qrCode.ID); err != nil {
+		internal.WriteAPIError(w, internal.NewAPIError(http.StatusInternalServerError, "Failed to serve ad"))
+		return
+	}
+
+	// Redirect to the original URL
+	http.Redirect(w, r, qrCode.OriginalURL, http.StatusFound)
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/gmgale/qr-ad-service/internal"
 	"github.com/gmgale/qr-ad-service/internal/models"
 	"net/http"
 
