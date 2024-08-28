@@ -1,24 +1,23 @@
 package main
 
 import (
-	"log"
-	"net/http"
-	"os"
-
 	"github.com/gmgale/qr-ad-service/internal/db"
 	"github.com/gmgale/qr-ad-service/internal/handlers"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/joho/godotenv"
+	"log"
+	"net/http"
 )
 
 func main() {
-	// Database connection string (you can load this from environment variables)
-	dsn := os.Getenv("DATABASE_URL")
-	if dsn == "" {
-		dsn = "host=localhost user=youruser password=yourpassword dbname=qrads port=5432 sslmode=disable"
+	// Load environment variables from .env file
+	err := godotenv.Load()
+	if err != nil {
+		log.Printf("No .env file found: %v", err)
 	}
 
 	// Initialize the database connection
-	db.ConnectDB(dsn)
+	db.ConnectDB()
 
 	// Set up the router
 	r := handlers.SetupRouter()
