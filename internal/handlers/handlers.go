@@ -15,11 +15,6 @@ func (s *Server) GetOwnersSummary(w http.ResponseWriter, r *http.Request) {
 	// Implementation here
 }
 
-// Get system statistics for admin
-func (s *Server) GetAdminStats(w http.ResponseWriter, r *http.Request) {
-	// Implementation here
-}
-
 // Wire up the server with the routes
 func SetupRouter() chi.Router {
 	r := chi.NewRouter()
