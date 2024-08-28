@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/gmgale/qr-ad-service/internal/auth"
 	"net/http"
 	"time"
 
@@ -55,6 +56,14 @@ func (s *Server) PostAuthLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// For now, return a simple success message
-	w.WriteHeader(http.StatusOK)
+	// Generate JWT token
+	tokenString, err := auth.GenerateJWT(user.ID)
+	if err != nil {
+		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		return
+	}
+
+	// Return the token as JSON
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"token": tokenString})
 }
