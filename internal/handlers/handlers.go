@@ -32,6 +32,8 @@ func SetupRouter() chi.Router {
 		r.Get("/owners/summary", s.GetOwnersSummary)
 		r.Post("/owners/qrcode", s.PostOwnersQrcode)
 		r.Get("/admin/stats", s.GetAdminStats)
+		r.Get("/serve-ad", s.ServeAdAndRedirect)
+		r.Get("/owners/revenue", s.GetOwnerRevenue)
 	})
 
 	// Register the API routes with the server instance
