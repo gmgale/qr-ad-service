@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/gmgale/qr-ad-service/internal"
 	"github.com/gmgale/qr-ad-service/internal/auth"
 	"net/http"
 	"time"
@@ -15,21 +16,21 @@ import (
 func (s *Server) PostAuthRegister(w http.ResponseWriter, r *http.Request) {
 	var req models.User
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+		internal.WriteAPIError(w, internal.NewAPIError(http.StatusBadRequest, "Invalid request payload"))
 		return
 	}
 
 	// Check if the email already exists
 	var existingUser models.User
 	if err := db.DB.Where("email = ?", req.Email).First(&existingUser).Error; err == nil {
-		http.Error(w, "Email already in use", http.StatusConflict)
+		internal.WriteAPIError(w, internal.NewAPIError(http.StatusConflict, "Email already in use"))
 		return
 	}
 
 	// Hash the password before saving it to the database
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.PasswordHash), bcrypt.DefaultCost)
 	if err != nil {
-		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+		internal.WriteAPIError(w, internal.NewAPIError(http.StatusInternalServerError, "Failed to hash password"))
 		return
 	}
 
@@ -43,7 +44,7 @@ func (s *Server) PostAuthRegister(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := db.DB.Create(&newUser).Error; err != nil {
-		http.Error(w, "Failed to create user", http.StatusInternalServerError)
+		internal.WriteAPIError(w, internal.NewAPIError(http.StatusInternalServerError, "Failed to create user"))
 		return
 	}
 
@@ -55,25 +56,25 @@ func (s *Server) PostAuthRegister(w http.ResponseWriter, r *http.Request) {
 func (s *Server) PostAuthLogin(w http.ResponseWriter, r *http.Request) {
 	var req models.User
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+		internal.WriteAPIError(w, internal.NewAPIError(http.StatusBadRequest, "Invalid request payload"))
 		return
 	}
 
 	var user models.User
 	if err := db.DB.Where("email = ?", req.Email).First(&user).Error; err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		internal.WriteAPIError(w, internal.NewAPIError(http.StatusUnauthorized, "Invalid credentials"))
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.PasswordHash)); err != nil {
-		http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+		internal.WriteAPIError(w, internal.NewAPIError(http.StatusUnauthorized, "Invalid credentials"))
 		return
 	}
 
 	// Generate JWT token
 	tokenString, err := auth.GenerateJWT(user.ID)
 	if err != nil {
-		http.Error(w, "Failed to generate token", http.StatusInternalServerError)
+		internal.WriteAPIError(w, internal.NewAPIError(http.StatusInternalServerError, "Failed to generate token"))
 		return
 	}
 

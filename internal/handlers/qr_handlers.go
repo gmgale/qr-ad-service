@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/gmgale/qr-ad-service/internal"
 	"github.com/gmgale/qr-ad-service/internal/auth"
 	"net/http"
 	"time"
@@ -15,14 +16,14 @@ import (
 func (s *Server) PostOwnersQrcode(w http.ResponseWriter, r *http.Request) {
 	var req models.QRCode
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+		internal.WriteAPIError(w, internal.NewAPIError(http.StatusBadRequest, "Invalid request payload"))
 		return
 	}
 
 	// Generate the QR code
 	qrCodePNG, err := qrcode.Encode(req.OriginalURL, qrcode.Medium, 256)
 	if err != nil {
-		http.Error(w, "Failed to generate QR code", http.StatusInternalServerError)
+		internal.WriteAPIError(w, internal.NewAPIError(http.StatusInternalServerError, "Failed to generate QR code"))
 		return
 	}
 
@@ -39,7 +40,7 @@ func (s *Server) PostOwnersQrcode(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := db.DB.Create(&newQRCode).Error; err != nil {
-		http.Error(w, "Failed to save QR code", http.StatusInternalServerError)
+		internal.WriteAPIError(w, internal.NewAPIError(http.StatusInternalServerError, "Failed to save QR code"))
 		return
 	}
 
